@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mongo Database</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container m-5 p-5">
+        <div class="row">
+            <div class="col-6">
+                <form action="/addProducts" method="POST">
+                    <input type="text" class="form-control" name="name" placeholder="Name">
+                    <input type="text" class="form-control" name="price" placeholder="price">
+                    <input type="text" class="form-control" name="quantity" placeholder="quantity"> <br>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+        <div id="product" class="mt-4">
+            <h3>Load Data From Database</h3>
+        </div>
+        <div id="update">
+
+        </div>
+    </div>
+
+    <!--Script-->
+    <script>
+        //load all data
+        function loadAllData() {
+            fetch('/products')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('product');
+                    container.innerHTML = '';
+                    data.forEach(product => {
+                        const item = document.createElement('p');
+                        item.innerHTML = `${product.name} price: ${product.price}
+                    <button class="btn btn-success" onclick="loadSingleProduct('${product._id}')"> Update </button>
+                    <button class="btn btn-danger" onclick="deleteProduct(event, '${product._id}')"> Delete </button>
+                    `
+                        container.appendChild(item);
+                    });
+                })
+        }
+        loadAllData()
+        // delect elements from database
+        function deleteProduct(event, id) {
+            fetch(`/delete/${id}`, {
+                method: 'DELETE'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data) {
+                        event.target.parentNode.style.display = "none";
+                    }
+                })
+        }
+        // deleteProduct()
+
+        // load single products
+        function loadSingleProduct(id) {
+            fetch(`/product/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    const update = document.getElementById('update');
+                    update.innerHTML = `
+                    <h2>Update ${data.name}</h2>
+                      <div class="col-6">
+                            Name : <input type="text" class="form-control" value=${data.name} id="name">
+                            Price : <input type="text" class="form-control" value=${data.price} id="price">
+                            Quantity : <input type="text" class="form-control" value=${data.quantity} id="quantity"> <br>
+                            <button class="btn btn-primary" onclick="updateProduct('${data._id}')">Update</button>
+                    </div>
+                    `
+                })
+        }
+        // update product
+        function updateProduct(id) {
+            console.log("click")
+            const name = document.getElementById('name').value;
+            const price = document.getElementById('price').value;
+            const quantity = document.getElementById('quantity').value;
+            const product = { name, price, quantity }
+            console.log(product)
+
+            fetch(`/update/${id}`, {
+                method: 'PATCH',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(product)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data) {
+                        loadAllData()
+                        document.getElementById('update').innerHTML = '';
+                    }
+                })
+        }
+        // updateProduct()
+    </script>
+</body>
+
+</html>
